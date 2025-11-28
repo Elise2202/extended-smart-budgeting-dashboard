@@ -18,24 +18,23 @@ public class GoalController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<List<Goal>> getGoals(@PathVariable String username) {
-        return ResponseEntity.ok(goalService.getGoalsByUsername(username));
+    public ResponseEntity<List<Goal>> getAll(@PathVariable String username) {
+        return ResponseEntity.ok(goalService.getAll(username));
     }
 
     @PostMapping
-    public ResponseEntity<Goal> createGoal(@RequestBody Goal goal) {
-        return ResponseEntity.ok(goalService.createGoal(goal));
+    public ResponseEntity<Goal> create(@RequestBody Goal goal) {
+        return ResponseEntity.ok(goalService.create(goal));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Goal> updateGoal(@PathVariable String id, @RequestBody Goal updatedGoal) {
-        Goal result = goalService.updateGoal(id, updatedGoal);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Goal> update(@PathVariable String id, @RequestBody Goal updated) {
+        return ResponseEntity.ok(goalService.update(id, updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteGoal(@PathVariable String id) {
-        goalService.deleteGoal(id);
-        return ResponseEntity.ok("Goal deleted successfully");
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        goalService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

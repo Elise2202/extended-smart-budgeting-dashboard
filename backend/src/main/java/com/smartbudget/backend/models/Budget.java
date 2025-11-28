@@ -3,8 +3,6 @@ package com.smartbudget.backend.models;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-
 @Document(collection = "budgets")
 public class Budget {
 
@@ -13,67 +11,22 @@ public class Budget {
 
     private String username;
     private String category;
-    private double limitAmount;
-    private double spentAmount;
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private Double limitAmount;     // MUST be Double (nullable)
+    private Double spentAmount;     // MUST be Double (nullable)
 
     public Budget() {}
 
-    public Budget(String username, String category, double limitAmount) {
-        this.username = username;
-        this.category = category;
-        this.limitAmount = limitAmount;
-        this.spentAmount = 0;
-        this.createdAt = LocalDateTime.now();
-    }
+    public String getId() { return id; }
 
-    // ---------- GETTERS ----------
-    public String getId() {
-        return id;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    public String getCategory() {
-        return category;
-    }
+    public Double getLimitAmount() { return limitAmount; }
+    public void setLimitAmount(Double limitAmount) { this.limitAmount = limitAmount; }
 
-    public double getLimitAmount() {
-        return limitAmount;
-    }
-
-    public double getSpentAmount() {
-        return spentAmount;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    // ---------- SETTERS ----------
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public void setLimitAmount(double limitAmount) {
-        this.limitAmount = limitAmount;
-    }
-
-    public void setSpentAmount(double spentAmount) {
-        this.spentAmount = spentAmount;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public Double getSpentAmount() { return spentAmount; }
+    public void setSpentAmount(Double spentAmount) { this.spentAmount = spentAmount; }
 }

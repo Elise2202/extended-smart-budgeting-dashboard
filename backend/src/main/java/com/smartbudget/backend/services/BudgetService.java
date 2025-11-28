@@ -9,34 +9,48 @@ import java.util.List;
 @Service
 public class BudgetService {
 
-    private final BudgetRepository budgetRepository;
+    private final BudgetRepository repo;
+    private final NotificationService notificationService;
 
-    public BudgetService(BudgetRepository budgetRepository) {
-        this.budgetRepository = budgetRepository;
+    public BudgetService(BudgetRepository repo, NotificationService notificationService) {
+        this.repo = repo;
+        this.notificationService = notificationService;
     }
 
-    public Budget createBudget(Budget budget) {
-        return budgetRepository.save(budget);
+    public Budget create(Budget budget) {
+        return repo.save(budget);
     }
 
-    public List<Budget> getBudgets(String username) {
-        return budgetRepository.findByUsername(username);
+    public List<Budget> getAll(String username) {
+        return repo.findByUsername(username);
     }
 
-    public Budget updateBudget(String id, Budget updated) {
-        return budgetRepository.findById(id).map(existing -> {
-            existing.setCategory(updated.getCategory());
-            existing.setLimitAmount(updated.getLimitAmount());
-            existing.setSpentAmount(updated.getSpentAmount());
-            return budgetRepository.save(existing);
-        }).orElse(null);
-    }
+    public Budget update(String id, Budget updated) {
+        Budget budget = repo.findById(id).orElse(null);
+        if (budget == null) return null;
 
-    public boolean deleteBudget(String id) {
-        if (budgetRepository.existsById(id)) {
-            budgetRepository.deleteById(id);
-            return true;
+        budget.setCategory(updated.getCategory());
+        budget.setLimitAmount(updated.getLimitAmount());
+        budget.setSpentAmount(updated.getSpentAmount());
+        budget.setUsername(updated.getUsername());
+
+        Budget saved = repo.save(budget);
+
+        if (saved.getLimitAmount() != null && saved.getSpentAmount() != null) {
+            if (saved.getSpentAmount() > saved.getLimitAmount()) {
+                notificationService.sendNotification(
+                        saved.getUsername(),
+                        "BUDGET_ALERT",
+                        "⚠ You exceeded your budget for: " + saved.getCategory()
+                );
+            }
         }
-        return false;
+
+
+        return saved;
+    }
+
+    public void delete(String id) {
+        repo.deleteById(id);
     }
 }

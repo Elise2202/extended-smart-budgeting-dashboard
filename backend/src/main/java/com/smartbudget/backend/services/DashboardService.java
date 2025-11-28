@@ -41,8 +41,9 @@ public class DashboardService {
 
         double balance = totalIncome - totalExpenses;
 
+        // FIXED: Replace getCurrentAmount() with getSavedAmount()
         long achievedGoals = goals.stream()
-                .filter(g -> g.getCurrentAmount() >= g.getTargetAmount())
+                .filter(g -> g.getSavedAmount() >= g.getTargetAmount())
                 .count();
 
         Map<String, Object> summary = new HashMap<>();
@@ -81,7 +82,8 @@ public class DashboardService {
         List<Goal> goals = goalRepository.findByUsername(username);
 
         goals.forEach(g -> {
-            double percent = (g.getCurrentAmount() / g.getTargetAmount()) * 100;
+            // FIXED: Replace getCurrentAmount() with getSavedAmount()
+            double percent = (g.getSavedAmount() / g.getTargetAmount()) * 100;
             progress.put(g.getTitle(), percent);
         });
 
