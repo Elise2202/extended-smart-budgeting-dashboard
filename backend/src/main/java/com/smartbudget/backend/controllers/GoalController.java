@@ -1,27 +1,40 @@
 package com.smartbudget.backend.controllers;
 
 import com.smartbudget.backend.models.Goal;
-import com.smartbudget.backend.repositories.GoalRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.smartbudget.backend.services.GoalService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/goals")
-@CrossOrigin("*")
+@RequestMapping("/api/goals")
 public class GoalController {
 
-    @Autowired
-    private GoalRepository repo;
+    private final GoalService goalService;
 
-    @PostMapping
-    public Goal add(@RequestBody Goal g) {
-        return repo.save(g);
+    public GoalController(GoalService goalService) {
+        this.goalService = goalService;
     }
 
-    @GetMapping("/{userId}")
-    public List<Goal> list(@PathVariable String userId) {
-        return repo.findByUserId(userId);
+    @GetMapping("/{username}")
+    public ResponseEntity<List<Goal>> getAll(@PathVariable String username) {
+        return ResponseEntity.ok(goalService.getAll(username));
+    }
+
+    @PostMapping
+    public ResponseEntity<Goal> create(@RequestBody Goal goal) {
+        return ResponseEntity.ok(goalService.create(goal));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Goal> update(@PathVariable String id, @RequestBody Goal updated) {
+        return ResponseEntity.ok(goalService.update(id, updated));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        goalService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

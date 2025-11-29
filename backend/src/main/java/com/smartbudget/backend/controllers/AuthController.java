@@ -1,8 +1,8 @@
 package com.smartbudget.backend.controllers;
 
 import com.smartbudget.backend.models.User;
-import com.smartbudget.backend.services.AuthService;
-import org.springframework.http.HttpStatus;
+import com.smartbudget.backend.repositories.UserRepository;
+import com.smartbudget.backend.security.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,29 +13,29 @@ import java.util.Map;
 @CrossOrigin("*")
 public class AuthController {
 
-    private final AuthService service;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(AuthService service) {
-        this.service = service;
+    public AuthController(UserRepository userRepository, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        return service.register(user);
+    public ResponseEntity<?> register(@RequestBody User user) {
+        userRepository.save(user);
+        return ResponseEntity.ok("User registered");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
-        User loggedIn = service.login(user.getUsername(), user.getPassword());
+    public ResponseEntity<?> login(@RequestBody User loginRequest) {
+        User user = userRepository.findByUsername(loginRequest.getUsername());
 
-        // If authentication failed → send 401 Unauthorized
-        if (loggedIn == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid username or password"));
+        if (user == null || !user.getPassword().equals(loginRequest.getPassword())) {
+            return ResponseEntity.status(401).body("Invalid credentials");
         }
 
-        // If login is correct → send the User object
-        return ResponseEntity.ok(loggedIn);
+        String token = jwtUtil.generateToken(user.getUsername());
+        return ResponseEntity.ok(Map.of("token", token));
     }
 }
