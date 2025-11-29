@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api"
+  // Backend base URL (Spring Boot)
+  baseURL: "http://localhost:8080/api",
 });
 
 // Restore token on load (if any)
@@ -21,50 +22,26 @@ export const setAuthToken = (token) => {
 };
 
 /**
- * MOCK LOGIN
- * For now we check against hardcoded users instead of calling the backend.
+ * REAL LOGIN
+ * Calls: POST http://localhost:8080/api/auth/login
  */
-const MOCK_USERS = [
-  {
-    id: 1,
-    username: "admin",
-    password: "admin123",
-    roles: ["ADMIN"]
-  },
-  {
-    id: 2,
-    username: "user",
-    password: "user123",
-    roles: ["USER"]
-  }
-];
-
 export const loginRequest = async ({ username, password }) => {
-  // simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  const res = await api.post("/auth/login", { username, password });
 
-  const match = MOCK_USERS.find(
-    (u) => u.username === username && u.password === password
-  );
+  // Backend returns a User object (id, username, ...).
+  const user = res.data;
 
-  if (!match) {
-    const error = new Error("Invalid username or password");
-    // Shape it like an Axios error so LoginPage error handling still works
-    error.response = { data: { message: "Invalid username or password" } };
-    throw error;
-  }
+  // AuthContext expects { token, user }
+  const token = `fake-token-${user.username}`;
 
   return {
-    token: `mock-token-${match.username}`,
-    user: {
-      id: match.id,
-      username: match.username,
-      roles: match.roles
-    }
+    token,
+    user,
   };
 };
 
-// keep your other real API calls as-is
+/* --- other API calls (adjust paths if needed) --- */
+
 export const getOverview = async () => {
   const res = await api.get("/overview");
   return res.data;
@@ -99,3 +76,5 @@ export const updateSettings = async (payload) => {
   const res = await api.put("/settings", payload);
   return res.data;
 };
+
+export default api;
