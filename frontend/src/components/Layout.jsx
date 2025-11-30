@@ -28,6 +28,15 @@ function Layout({ children }) {
           <NavLink to="/budgets" className={navLinkClass}>
             Budgets
           </NavLink>
+          <NavLink to="/goals" className={navLinkClass}>
+            Goals
+          </NavLink>
+            <NavLink to="/reports" className={navLinkClass}>
+            Reports
+          </NavLink>
+          <NavLink to="/notifications" className={navLinkClass}>
+            Notifications
+          </NavLink>
           <NavLink to="/settings" className={navLinkClass}>
             Settings
           </NavLink>
@@ -35,21 +44,23 @@ function Layout({ children }) {
       </aside>
 
       <main className="main-content">
-        <header className="topbar" style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between"
-        }}>
-        {/* LEFT: Title */}
-        <span className="topbar-title">Extended Smart Budgeting Dashboard</span>
+        <header
+          className="topbar"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span className="topbar-title">
+            Extended Smart Budgeting Dashboard
+          </span>
 
-        {/* RIGHT: Logout button + username */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             {user && <span className="muted">Hi, {user.username}</span>}
             <button onClick={handleLogout}>Logout</button>
-        </div>
+          </div>
         </header>
-
 
         <section className="page-content">{children}</section>
       </main>
