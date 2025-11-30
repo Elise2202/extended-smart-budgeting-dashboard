@@ -1,31 +1,54 @@
 import React from "react";
 import useApi from "../hooks/useApi";
-import { getOverview, getBudgets, getTransactions } from "../api/client";
+import {
+  getDashboardSummary,
+  getBudgets,
+  getTransactions,
+  createTransaction,
+} from "../api/client";
+
 import DashboardSummary from "../components/DashboardSummary";
 import BudgetProgress from "../components/BudgetProgress";
 import TransactionsTable from "../components/TransactionsTable";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
-import { createTransaction } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 
 function DashboardPage() {
-  const overviewState = useApi(getOverview, []);
-  const budgetsState = useApi(getBudgets, []);
-  const transactionsState = useApi(() => getTransactions({ limit: 8 }), []);
+  const { user } = useAuth();
+  const username = user?.username;
+
+  // If somehow no user, don't call APIs
+  const summaryState = useApi(
+    () => (username ? getDashboardSummary(username) : Promise.resolve(null)),
+    [username]
+  );
+
+  const budgetsState = useApi(
+    () => (username ? getBudgets(username) : Promise.resolve([])),
+    [username]
+  );
+
+  const transactionsState = useApi(
+    () => (username ? getTransactions({ username }) : Promise.resolve([])),
+    [username]
+  );
 
   const handleCreateTransaction = async (payload) => {
+    if (!username) return;
     try {
-      await createTransaction(payload);
-      // simple refresh
-      transactionsState.setData(await getTransactions({ limit: 8 }));
+      await createTransaction({ ...payload, username });
+      transactionsState.setData(await getTransactions({ username }));
     } catch (err) {
       console.error(err);
     }
   };
 
   const loading =
-    overviewState.loading || budgetsState.loading || transactionsState.loading;
-  const error = overviewState.error || budgetsState.error || transactionsState.error;
+    summaryState.loading || budgetsState.loading || transactionsState.loading;
+
+  const error =
+    summaryState.error || budgetsState.error || transactionsState.error;
 
   return (
     <>
@@ -34,7 +57,7 @@ function DashboardPage() {
 
       {!loading && !error && (
         <>
-          <DashboardSummary overview={overviewState.data} />
+          <DashboardSummary overview={summaryState.data} />
           <div className="grid-2">
             <BudgetProgress budgets={budgetsState.data || []} />
             <TransactionsTable

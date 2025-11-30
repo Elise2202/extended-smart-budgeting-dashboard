@@ -3,9 +3,17 @@ import useApi from "../hooks/useApi";
 import { getBudgets, updateBudget } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import { useAuth } from "../auth/AuthContext";
 
 function BudgetsPage() {
-  const { data: budgets, loading, error, setData } = useApi(getBudgets, []);
+  const { user } = useAuth();
+  const username = user?.username;
+
+  const { data: budgets, loading, error, setData } = useApi(
+    () => (username ? getBudgets(username) : Promise.resolve([])),
+    [username]
+  );
+
   const [editing, setEditing] = useState(null);
   const [newLimit, setNewLimit] = useState("");
 
@@ -47,7 +55,7 @@ function BudgetsPage() {
                   <td className="align-right">
                     {b.spent.toLocaleString(undefined, {
                       style: "currency",
-                      currency: "USD"
+                      currency: "USD",
                     })}
                   </td>
                   <td className="align-right">
@@ -61,7 +69,7 @@ function BudgetsPage() {
                     ) : (
                       b.limit.toLocaleString(undefined, {
                         style: "currency",
-                        currency: "USD"
+                        currency: "USD",
                       })
                     )}
                   </td>

@@ -1,23 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useApi from "../hooks/useApi";
 import { getSettings, updateSettings } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import { useAuth } from "../auth/AuthContext";
 
 function SettingsPage() {
-  const { data, loading, error, setData } = useApi(getSettings, []);
+  const { user } = useAuth();
+  const username = user?.username;
+
+  const { data, loading, error, setData } = useApi(
+    () => (username ? getSettings(username) : Promise.resolve(null)),
+    [username]
+  );
+
   const [form, setForm] = useState({
     currency: "USD",
     defaultPeriod: "MONTH",
-    locale: "en-US"
+    locale: "en-US",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (data) {
       setForm({
         currency: data.currency || "USD",
         defaultPeriod: data.defaultPeriod || "MONTH",
-        locale: data.locale || "en-US"
+        locale: data.locale || "en-US",
       });
     }
   }, [data]);
@@ -28,7 +36,8 @@ function SettingsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updated = await updateSettings(form);
+    if (!username) return;
+    const updated = await updateSettings(username, form);
     setData(updated);
   };
 

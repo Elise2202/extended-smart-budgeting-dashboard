@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/budgets")
+@CrossOrigin("*")
 public class BudgetController {
 
     private final BudgetService budgetService;

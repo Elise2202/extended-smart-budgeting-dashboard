@@ -6,17 +6,18 @@ import TransactionsPage from "./pages/TransactionsPage";
 import BudgetsPage from "./pages/BudgetsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
+import GoalsPage from "./pages/GoalsPage";   // 👈 NEW
+import ReportsPage from "./pages/ReportsPage";  // 👈 NEW
+import NotificationsPage from "./pages/NotificationsPage";
 import { useAuth } from "./auth/AuthContext";
 
 function App() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    // Optional: you can render a global loading state here
     return null;
   }
 
-  // When NOT logged in: only show login, redirect everything to /login
   if (!isAuthenticated) {
     return (
       <Routes>
@@ -26,7 +27,6 @@ function App() {
     );
   }
 
-  // When logged in: show full app with Layout + dashboard etc.
   return (
     <Layout>
       <Routes>
@@ -34,6 +34,9 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/budgets" element={<BudgetsPage />} />
+        <Route path="/goals" element={<GoalsPage />} />      {/* 👈 NEW */}
+        <Route path="/reports" element={<ReportsPage />} />        {/* NEW */}
+        <Route path="/notifications" element={<NotificationsPage />} />  {/* 👈 NEW */}
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

@@ -4,17 +4,24 @@ import { getTransactions, createTransaction } from "../api/client";
 import TransactionsTable from "../components/TransactionsTable";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import { useAuth } from "../auth/AuthContext";
 
 function TransactionsPage() {
+  const { user } = useAuth();
+  const username = user?.username;
+
   const [filters, setFilters] = useState({
     from: "",
     to: "",
-    category: ""
+    category: "",
   });
 
   const { data, loading, error, setData } = useApi(
-    () => getTransactions(filters),
-    [JSON.stringify(filters)]
+    () =>
+      username
+        ? getTransactions({ username, category: filters.category || undefined })
+        : Promise.resolve([]),
+    [username, filters.category]
   );
 
   const handleChange = (e) => {
@@ -22,8 +29,14 @@ function TransactionsPage() {
   };
 
   const handleCreateTransaction = async (payload) => {
-    await createTransaction(payload);
-    setData(await getTransactions(filters));
+    if (!username) return;
+    await createTransaction({ ...payload, username });
+    setData(
+      await getTransactions({
+        username,
+        category: filters.category || undefined,
+      })
+    );
   };
 
   return (
@@ -37,7 +50,12 @@ function TransactionsPage() {
           value={filters.from}
           onChange={handleChange}
         />
-        <input type="date" name="to" value={filters.to} onChange={handleChange} />
+        <input
+          type="date"
+          name="to"
+          value={filters.to}
+          onChange={handleChange}
+        />
         <input
           type="text"
           name="category"
