@@ -5,6 +5,7 @@ import com.smartbudget.backend.repositories.GoalRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GoalService {
@@ -25,32 +26,29 @@ public class GoalService {
         return repo.findByUsername(username);
     }
 
-    public Goal update(String id, Goal updated) {
-        Goal goal = repo.findById(id).orElse(null);
-        if (goal == null) return null;
-
+    // GoalService.java
+    public Optional<Goal> update(String id, Goal updated) {
+    return repo.findById(id).map(goal -> {
         goal.setTitle(updated.getTitle());
         goal.setTargetAmount(updated.getTargetAmount());
         goal.setSavedAmount(updated.getSavedAmount());
         goal.setUsername(updated.getUsername());
-
         Goal saved = repo.save(goal);
 
         if (saved.getTargetAmount() != null && saved.getSavedAmount() != null) {
             double progress = (saved.getSavedAmount() / saved.getTargetAmount()) * 100.0;
-
             if (progress >= 80) {
                 notificationService.sendNotification(
-                        saved.getUsername(),
-                        "GOAL_ALERT",
-                        "🎯 You are close to achieving your goal: " + saved.getTitle()
+                    saved.getUsername(),
+                    "GOAL_ALERT",
+                    "🎯 You are close to achieving your goal: " + saved.getTitle()
                 );
             }
         }
 
-
         return saved;
-    }
+    });
+}
 
     public void delete(String id) {
         repo.deleteById(id);

@@ -1,4 +1,7 @@
+// frontend/src/components/DashboardSummary.jsx
 import React from "react";
+import { useSettings } from "../settings/SettingsContext";
+import { formatCurrency } from "../utils/format";
 
 function DashboardSummary({ overview }) {
   if (!overview) return null;
@@ -9,13 +12,20 @@ function DashboardSummary({ overview }) {
     totalExpenses,
     savings,
     savingsRate,
-    topCategories = []
+    topCategories = [],
+    goalsAchieved,
   } = overview;
+
+  const { settings } = useSettings();
+  const currency = settings?.currency || "USD";
+  const locale = settings?.locale || undefined;
 
   return (
     <div className="grid-2">
+      {/* LEFT: Monthly snapshot */}
       <div className="card">
         <h2>Monthly Snapshot</h2>
+
         <p className="label">Month</p>
         <p className="value">{month}</p>
 
@@ -23,34 +33,32 @@ function DashboardSummary({ overview }) {
           <div>
             <p className="label">Income</p>
             <p className="value positive">
-              {totalIncome?.toLocaleString(undefined, {
-                style: "currency",
-                currency: "USD"
-              })}
+              {formatCurrency(totalIncome, currency, locale)}
             </p>
           </div>
+
           <div>
             <p className="label">Expenses</p>
             <p className="value negative">
-              {totalExpenses?.toLocaleString(undefined, {
-                style: "currency",
-                currency: "USD"
-              })}
+              {formatCurrency(totalExpenses, currency, locale)}
             </p>
           </div>
+
           <div>
             <p className="label">Savings</p>
             <p className="value">
-              {savings?.toLocaleString(undefined, {
-                style: "currency",
-                currency: "USD"
-              })}
+              {formatCurrency(savings, currency, locale)}
             </p>
             <p className="subtext">{savingsRate}% of income</p>
+
+            {typeof goalsAchieved === "number" && (
+              <p className="subtext">Goals achieved: {goalsAchieved}</p>
+            )}
           </div>
         </div>
       </div>
 
+      {/* RIGHT: Top spending categories */}
       <div className="card">
         <h2>Top Spending Categories</h2>
         {topCategories.length === 0 ? (
@@ -60,12 +68,7 @@ function DashboardSummary({ overview }) {
             {topCategories.map((cat) => (
               <li key={cat.name} className="category-item">
                 <span>{cat.name}</span>
-                <span>
-                  {cat.amount.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD"
-                  })}
-                </span>
+                <span>{formatCurrency(cat.amount, currency, locale)}</span>
               </li>
             ))}
           </ul>

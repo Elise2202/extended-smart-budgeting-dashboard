@@ -27,10 +27,14 @@ public class GoalController {
         return ResponseEntity.ok(goalService.create(goal));
     }
 
+    // GoalController.java
     @PutMapping("/{id}")
     public ResponseEntity<Goal> update(@PathVariable String id, @RequestBody Goal updated) {
-        return ResponseEntity.ok(goalService.update(id, updated));
+        return goalService.update(id, updated)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {

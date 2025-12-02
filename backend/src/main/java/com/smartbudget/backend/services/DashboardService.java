@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DashboardService {
@@ -24,33 +24,109 @@ public class DashboardService {
         this.goalRepository = goalRepository;
     }
 
+    /**
+     * Summary used by the main Dashboard.
+     *
+     * Returns a map with:
+     *  - month          (e.g. "December 2025")
+     *  - totalIncome
+     *  - totalExpenses
+     *  - savings        (income - expenses, but not below 0)
+     *  - savingsRate    (savings / income * 100, if income > 0)
+     *  - goalsAchieved
+     *  - topCategories  (List<Map<String,Object>> with name + amount)
+     */
     public Map<String, Object> getSummary(String username) {
 
         List<Transaction> transactions = transactionRepository.findByUsername(username);
-        List<Goal> goals = goalRepository.findByUsername(username);
+        if (transactions == null) {
+            transactions = Collections.emptyList();
+        }
 
+        List<Goal> goals = goalRepository.findByUsername(username);
+        if (goals == null) {
+            goals = Collections.emptyList();
+        }
+
+        // ---- income / expenses (null-safe on type) ----
         double totalIncome = transactions.stream()
-                .filter(t -> t.getType().equalsIgnoreCase("income"))
+                .filter(t -> {
+                    String type = t.getType();
+                    return type != null && type.equalsIgnoreCase("income");
+                })
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
         double totalExpenses = transactions.stream()
-                .filter(t -> t.getType().equalsIgnoreCase("expense"))
+                .filter(t -> {
+                    String type = t.getType();
+                    return type != null && type.equalsIgnoreCase("expense");
+                })
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
         double balance = totalIncome - totalExpenses;
+        double savings = Math.max(0, balance);
+        double savingsRate = (totalIncome > 0)
+                ? (savings / totalIncome) * 100.0
+                : 0.0;
 
-        // FIXED: Replace getCurrentAmount() with getSavedAmount()
+        // ---- goals achieved (null-safe) ----
         long achievedGoals = goals.stream()
-                .filter(g -> g.getSavedAmount() >= g.getTargetAmount())
+                .filter(g -> {
+                    Double target = g.getTargetAmount();
+                    Double saved = g.getSavedAmount();
+                    return target != null && target > 0
+                           && saved != null && saved >= target;
+                })
                 .count();
 
+        // ---- top spending categories for current month ----
+        YearMonth currentMonth = YearMonth.now();
+        LocalDate start = currentMonth.atDay(1);
+        LocalDate end = currentMonth.atEndOfMonth();
+
+        Map<String, Double> byCategory = transactions.stream()
+                .filter(t -> {
+                    String type = t.getType();
+                    LocalDate date = t.getDate();
+                    return type != null
+                            && type.equalsIgnoreCase("expense")
+                            && date != null
+                            && !date.isBefore(start)
+                            && !date.isAfter(end);
+                })
+                .collect(Collectors.groupingBy(
+                        t -> Optional.ofNullable(t.getCategory()).orElse("Uncategorized"),
+                        Collectors.summingDouble(Transaction::getAmount)
+                ));
+
+        // sort categories desc by amount and take top 5
+        List<Map<String, Object>> topCategories = byCategory.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .limit(5)
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("name", e.getKey());
+                    m.put("amount", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        // ---- build response map for DashboardSummary.jsx ----
         Map<String, Object> summary = new HashMap<>();
+        String monthLabel = currentMonth.getMonth()
+                .getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                + " " + currentMonth.getYear();
+
+        summary.put("month", monthLabel);
         summary.put("totalIncome", totalIncome);
         summary.put("totalExpenses", totalExpenses);
+        summary.put("savings", savings);
+        summary.put("savingsRate", Math.round(savingsRate * 100.0) / 100.0); // 2 decimals
         summary.put("balance", balance);
         summary.put("goalsAchieved", achievedGoals);
+        summary.put("topCategories", topCategories);
 
         return summary;
     }
@@ -59,19 +135,27 @@ public class DashboardService {
         Map<String, Double> result = new HashMap<>();
 
         List<Transaction> transactions = transactionRepository.findByUsername(username);
+        if (transactions == null) {
+            return result;
+        }
 
         YearMonth currentMonth = YearMonth.now();
 
         transactions.stream()
                 .filter(t -> {
                     LocalDate date = t.getDate();
-                    return date.getYear() == currentMonth.getYear()
+                    String type = t.getType();
+                    return date != null
+                            && date.getYear() == currentMonth.getYear()
                             && date.getMonthValue() == currentMonth.getMonthValue()
-                            && t.getType().equalsIgnoreCase("expense");
+                            && type != null
+                            && type.equalsIgnoreCase("expense");
                 })
-                .forEach(t -> {
-                    result.merge(t.getCategory(), t.getAmount(), Double::sum);
-                });
+                .forEach(t -> result.merge(
+                        Optional.ofNullable(t.getCategory()).orElse("Uncategorized"),
+                        t.getAmount(),
+                        Double::sum
+                ));
 
         return result;
     }
@@ -80,11 +164,17 @@ public class DashboardService {
         Map<String, Double> progress = new HashMap<>();
 
         List<Goal> goals = goalRepository.findByUsername(username);
+        if (goals == null) {
+            return progress;
+        }
 
         goals.forEach(g -> {
-            // FIXED: Replace getCurrentAmount() with getSavedAmount()
-            double percent = (g.getSavedAmount() / g.getTargetAmount()) * 100;
-            progress.put(g.getTitle(), percent);
+            Double target = g.getTargetAmount();
+            Double saved = g.getSavedAmount();
+            if (target != null && target > 0 && saved != null) {
+                double percent = (saved / target) * 100;
+                progress.put(g.getTitle(), percent);
+            }
         });
 
         return progress;

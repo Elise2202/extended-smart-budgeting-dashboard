@@ -1,15 +1,20 @@
-// frontend/src/pages/LoginPage.jsx
+// frontend/src/pages/RegisterPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { registerRequest } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 
-function LoginPage() {
+function RegisterPage() {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,39 +24,59 @@ function LoginPage() {
   }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
+    const validateForm = () => {
+  const username = form.username.trim();
+  const password = (form.password ?? "").trim();
+  const confirmPassword = (form.confirmPassword ?? "").trim();
 
+  if (username.length < 3) {
+    return "Username must be at least 3 characters long.";
+  }
+  if (password.length < 8) {
+    return "Password must be at least 8 characters long.";
+  }
+  if (!/[A-Z]/.test(password)) {
+    return "Password must contain at least one uppercase letter.";
+  }
+  if (!/[0-9]/.test(password)) {
+    return "Password must contain at least one number.";
+  }
+  if (password !== confirmPassword) {
+    return "Passwords do not match.";
+  }
+  return null;
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
 
-    const username = form.username.trim();
-    const password = form.password;
-
-    // Simple client-side validation matching the backend
-    if (username.length < 3) {
-      setError("Username must be at least 3 characters long.");
-      setSubmitting(false);
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
-      setSubmitting(false);
-      return;
-    }
-
+    setSubmitting(true);
     try {
-      await login({ username, password });
+      const username = form.username.trim();
+
+      // 1) register user
+      await registerRequest({ username, password: form.password });
+
+      // 2) auto-login
+      await login({ username, password: form.password });
+
+      // 3) go to dashboard
       navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error(err);
       const msg =
         err.response?.data?.message ||
         err.response?.data ||
-        "Login failed. Please check your credentials.";
+        "Registration failed. Try a different username.";
       setError(msg);
     } finally {
       setSubmitting(false);
@@ -69,8 +94,8 @@ function LoginPage() {
   return (
     <div className="login-page">
       <div className="card login-card">
-        <h1>Welcome</h1>
-        <p className="muted">Sign in to access your SmartBudget dashboard.</p>
+        <h1>Create account</h1>
+        <p className="muted">Register to start using SmartBudget.</p>
 
         {error && <div className="error-box">{error}</div>}
 
@@ -95,7 +120,7 @@ function LoginPage() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
               />
               <button
@@ -107,22 +132,34 @@ function LoginPage() {
               </button>
             </div>
             <span className="password-hint muted">
-              At least 8 characters.
+              Min 8 chars, 1 uppercase, 1 number.
             </span>
           </label>
 
+          <label>
+            Confirm password
+            <input
+              type={showPassword ? "text" : "password"}
+              name="confirmPassword"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              autoComplete="new-password"
+              required
+            />
+          </label>
+
           <button type="submit" className="login-button" disabled={submitting}>
-            {submitting ? "Signing in..." : "Sign in"}
+            {submitting ? "Creating account..." : "Register"}
           </button>
         </form>
 
         <div className="auth-switch">
-          Don&apos;t have an account?{" "}
-          <Link to="/register">Create one</Link>
+          Already have an account?{" "}
+          <Link to="/login">Sign in instead</Link>
         </div>
       </div>
     </div>
   );
 }
 
-export default LoginPage;
+export default RegisterPage;

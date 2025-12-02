@@ -28,32 +28,47 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
         String authHeader = request.getHeader("Authorization");
+
+        System.out.println(">>> JwtFilter: " + method + " " + uri);
+        System.out.println(">>> JwtFilter: Authorization = " + authHeader);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+
             try {
                 // validate token & extract username
                 String username = jwtUtil.extractUsername(token);
+                System.out.println(">>> JwtFilter: token OK, username = " + username);
 
-                // create an authenticated object and put it in the security context
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                Collections.emptyList() // no roles for now
-                        );
+                if (username != null &&
+                        SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    username,
+                                    null,
+                                    Collections.emptyList() // no roles for now
+                            );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
 
             } catch (Exception e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Token");
-                return;
+                // Token invalid / expired / signature mismatch
+                System.out.println(">>> JwtFilter: INVALID token: " + e.getMessage());
+                e.printStackTrace();
+                // IMPORTANT: do NOT send error here; just clear context and continue.
+                SecurityContextHolder.clearContext();
             }
+        } else {
+            System.out.println(">>> JwtFilter: no Bearer token");
         }
 
         filterChain.doFilter(request, response);

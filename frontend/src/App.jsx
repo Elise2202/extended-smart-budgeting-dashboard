@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
@@ -6,8 +7,9 @@ import TransactionsPage from "./pages/TransactionsPage";
 import BudgetsPage from "./pages/BudgetsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
-import GoalsPage from "./pages/GoalsPage";   // 👈 NEW
-import ReportsPage from "./pages/ReportsPage";  // 👈 NEW
+import RegisterPage from "./pages/RegisterPage";
+import GoalsPage from "./pages/GoalsPage";
+import ReportsPage from "./pages/ReportsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import { useAuth } from "./auth/AuthContext";
 
@@ -18,15 +20,18 @@ function App() {
     return null;
   }
 
+  // Not logged in: only login & register
   if (!isAuthenticated) {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
+  // Logged in: full app
   return (
     <Layout>
       <Routes>
@@ -34,9 +39,9 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/budgets" element={<BudgetsPage />} />
-        <Route path="/goals" element={<GoalsPage />} />      {/* 👈 NEW */}
-        <Route path="/reports" element={<ReportsPage />} />        {/* NEW */}
-        <Route path="/notifications" element={<NotificationsPage />} />  {/* 👈 NEW */}
+        <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

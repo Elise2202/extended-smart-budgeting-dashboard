@@ -6,6 +6,30 @@ const api = axios.create({
   baseURL: "http://localhost:8080/api",
 });
 
+/* ---------- INTERCEPTORS ---------- */
+
+// Clear auth if backend returns 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
+      // Optional: window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Attach JWT token to every request if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 /* ---------- AUTH TOKEN HANDLING ---------- */
 
 // Restore token on page load (if it exists)
@@ -38,6 +62,17 @@ export const loginRequest = async ({ username, password }) => {
   const user = { username };
 
   return { token, user };
+};
+
+/* ---------- AUTH / REGISTER ---------- */
+/**
+ * POST /api/auth/register
+ * Body: { username, password }
+ * Response: { message, username }  (depending on your backend)
+ */
+export const registerRequest = async ({ username, password }) => {
+  const res = await api.post("/auth/register", { username, password });
+  return res.data;
 };
 
 /* ---------- DASHBOARD API ---------- */
@@ -96,17 +131,38 @@ export const createTransaction = async (transaction) => {
  * Backend:
  *  GET  /api/budgets/{username}
  *  PUT  /api/budgets/{id}
+ *  POST /api/budgets       (if you add a create form later)
  */
+
+// Convert backend ➜ frontend shape
+const fromApiBudget = (b) => ({
+  id: b.id,
+  username: b.username,
+  category: b.category,
+  // fall back to 0 so UI code is simpler
+  limit: b.limitAmount ?? 0,
+  spent: b.spentAmount ?? 0,
+});
+
+// Convert frontend ➜ backend shape
+const toApiBudget = (b) => ({
+  id: b.id,
+  username: b.username,
+  category: b.category,
+  limitAmount: b.limit,
+  spentAmount: b.spent,
+});
 
 export const getBudgets = async (username) => {
   if (!username) return [];
   const res = await api.get(`/budgets/${encodeURIComponent(username)}`);
-  return res.data;
+  return res.data.map(fromApiBudget);
 };
 
-export const updateBudget = async (budgetId, payload) => {
+export const updateBudget = async (budgetId, budget) => {
+  const payload = toApiBudget({ ...budget, id: budgetId });
   const res = await api.put(`/budgets/${budgetId}`, payload);
-  return res.data;
+  return fromApiBudget(res.data);
 };
 
 /* ---------- GOALS API ---------- */

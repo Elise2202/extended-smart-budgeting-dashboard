@@ -7,6 +7,8 @@ import {
 } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import { useSettings } from "../settings/SettingsContext";
+import { formatCurrency } from "../utils/format";
 
 const monthOptions = [
   { value: 1, label: "January" },
@@ -26,6 +28,10 @@ const monthOptions = [
 function ReportsPage() {
   const { user } = useAuth();
   const username = user?.username;
+
+  const { settings } = useSettings();
+  const currency = settings?.currency || "USD";
+  const locale = settings?.locale || undefined;
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -100,24 +106,15 @@ function ReportsPage() {
               <>
                 <p>
                   <strong>Income: </strong>
-                  {monthly.totalIncome?.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD",
-                  })}
+                  {formatCurrency(monthly.totalIncome, currency, locale)}
                 </p>
                 <p>
                   <strong>Expenses: </strong>
-                  {monthly.totalExpenses?.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD",
-                  })}
+                  {formatCurrency(monthly.totalExpenses, currency, locale)}
                 </p>
                 <p>
                   <strong>Balance: </strong>
-                  {monthly.balance?.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD",
-                  })}
+                  {formatCurrency(monthly.balance, currency, locale)}
                 </p>
               </>
             ) : (
@@ -147,10 +144,7 @@ function ReportsPage() {
                     <tr key={c.name}>
                       <td>{c.name}</td>
                       <td className="align-right">
-                        {c.total?.toLocaleString(undefined, {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(c.total, currency, locale)}
                       </td>
                     </tr>
                   ))}
