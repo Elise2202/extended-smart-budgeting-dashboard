@@ -28,6 +28,19 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
-    // (Add them or use Lombok if enabled)
+    // ----- Getters -----
+    public String getId() { return id; }
+    public String getUsername() { return username; }
+    public String getType() { return type; }
+    public String getMessage() { return message; }
+    public boolean isRead() { return read; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    // ----- Setters -----
+    public void setId(String id) { this.id = id; }
+    public void setUsername(String username) { this.username = username; }
+    public void setType(String type) { this.type = type; }
+    public void setMessage(String message) { this.message = message; }
+    public void setRead(boolean read) { this.read = read; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -13,7 +13,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore auth state on page reload
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem("authToken");

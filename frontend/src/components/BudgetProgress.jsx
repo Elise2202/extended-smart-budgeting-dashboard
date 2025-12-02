@@ -1,6 +1,12 @@
 import React from "react";
+import { useSettings } from "../settings/SettingsContext";
+import { formatCurrency } from "../utils/format";
 
 function BudgetProgress({ budgets = [] }) {
+  const { settings } = useSettings();
+  const currency = settings?.currency || "USD";
+  const locale = settings?.locale || undefined;
+
   return (
     <div className="card">
       <h2>Budgets</h2>
@@ -17,15 +23,8 @@ function BudgetProgress({ budgets = [] }) {
                 <div className="budget-header">
                   <span>{b.category}</span>
                   <span>
-                    {b.spent.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD"
-                    })}{" "}
-                    /{" "}
-                    {b.limit.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD"
-                    })}
+                    {formatCurrency(b.spent, currency, locale)}{" "}
+                    / {formatCurrency(b.limit, currency, locale)}
                   </span>
                 </div>
                 <div className="progress-bar">

@@ -1,12 +1,14 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { useSettings } from "../settings/SettingsContext";
 
 const navLinkClass = ({ isActive }) =>
   "sidebar-link" + (isActive ? " sidebar-link-active" : "");
 
 function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useSettings();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -31,7 +33,7 @@ function Layout({ children }) {
           <NavLink to="/goals" className={navLinkClass}>
             Goals
           </NavLink>
-            <NavLink to="/reports" className={navLinkClass}>
+          <NavLink to="/reports" className={navLinkClass}>
             Reports
           </NavLink>
           <NavLink to="/notifications" className={navLinkClass}>
@@ -44,19 +46,20 @@ function Layout({ children }) {
       </aside>
 
       <main className="main-content">
-        <header
-          className="topbar"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <header className="topbar">
           <span className="topbar-title">
             Extended Smart Budgeting Dashboard
           </span>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? "☀ Light mode" : "🌙 Dark mode"}
+            </button>
+
             {user && <span className="muted">Hi, {user.username}</span>}
             <button onClick={handleLogout}>Logout</button>
           </div>

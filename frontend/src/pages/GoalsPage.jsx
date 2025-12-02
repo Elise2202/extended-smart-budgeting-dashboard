@@ -9,10 +9,16 @@ import {
 } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import { useSettings } from "../settings/SettingsContext";
+import { formatCurrency } from "../utils/format";
 
 function GoalsPage() {
   const { user } = useAuth();
   const username = user?.username;
+
+  const { settings } = useSettings();
+  const currency = settings?.currency || "USD";
+  const locale = settings?.locale || undefined;
 
   // Load goals for this user
   const {
@@ -86,11 +92,14 @@ function GoalsPage() {
   };
 
   const saveEdit = async (goal) => {
+    const targetAmount = parseFloat(editValues.targetAmount);
+    const savedAmount = parseFloat(editValues.savedAmount || "0");
+
     const payload = {
       ...goal,
       title: editValues.title,
-      targetAmount: parseFloat(editValues.targetAmount),
-      savedAmount: parseFloat(editValues.savedAmount || 0),
+      targetAmount: isNaN(targetAmount) ? 0 : targetAmount,
+      savedAmount: isNaN(savedAmount) ? 0 : savedAmount,
     };
 
     const updated = await updateGoal(goal.id, payload);
@@ -175,15 +184,9 @@ function GoalsPage() {
                             </>
                           ) : (
                             <>
-                              {saved.toLocaleString(undefined, {
-                                style: "currency",
-                                currency: "USD",
-                              })}{" "}
+                              {formatCurrency(saved, currency, locale)}{" "}
                               /{" "}
-                              {target.toLocaleString(undefined, {
-                                style: "currency",
-                                currency: "USD",
-                              })}
+                              {formatCurrency(target, currency, locale)}
                               <div className="progress-bar" style={{ marginTop: 4 }}>
                                 <div
                                   className={

@@ -1,7 +1,11 @@
-/* Light Mode Theme */
+/* Base font family */
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
 
+/* LIGHT THEME VARIABLES */
+:root[data-theme="light"] {
   /* Backgrounds */
   --background: #f5f7fb;
   --sidebar-bg: #ffffff;
@@ -23,6 +27,43 @@
   --negative: #c0392b;
 
   /* Progress bar colors */
+  --progress-green: #74d680;
+  --progress-over: linear-gradient(90deg, #ff8a00, #ff3d00);
+}
+
+/* DARK THEME VARIABLES */
+:root[data-theme="dark"] {
+  --background: #050816;
+  --sidebar-bg: #0b1020;
+  --card-bg: #101528;
+
+  --border-color: #262b3f;
+
+  --text: #f5f7ff;
+  --text-muted: #9ca3c7;
+
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+
+  --positive: #4ade80;
+  --negative: #fb7185;
+
+  --progress-green: #22c55e;
+  --progress-over: linear-gradient(90deg, #fb923c, #f97316);
+}
+
+/* Default if data-theme is missing */
+:root {
+  --background: #f5f7fb;
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #d7d9df;
+  --text: #1a1a1a;
+  --text-muted: #6e6e6e;
+  --primary: #4a6cf7;
+  --primary-hover: #3b57d9;
+  --positive: #2e8b57;
+  --negative: #c0392b;
   --progress-green: #74d680;
   --progress-over: linear-gradient(90deg, #ff8a00, #ff3d00);
 }
@@ -70,7 +111,7 @@ body {
 }
 
 .sidebar-link:hover {
-  background: #eef1ff;
+  background: #eef1ff33;
   color: var(--text);
 }
 
@@ -101,6 +142,12 @@ body {
   color: var(--text);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 /* PAGES */
 .page-content {
   padding: 1.5rem;
@@ -112,7 +159,7 @@ body {
   border-radius: 1rem;
   padding: 1rem 1.2rem;
   border: 1px solid var(--border-color);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
   margin-bottom: 1rem;
 }
 
@@ -171,7 +218,7 @@ select,
 button {
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
-  background: #ffffff;
+  background: #ffffff10;
   color: var(--text);
   padding: 0.4rem 0.5rem;
   font-size: 0.85rem;
@@ -215,7 +262,7 @@ button:hover {
   width: 100%;
   height: 8px;
   border-radius: 999px;
-  background: #f0f2f6;
+  background: #f0f2f633;
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -242,13 +289,7 @@ button:hover {
   max-width: 380px;
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* Login form */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -267,4 +308,72 @@ button:hover {
   padding: 0.6rem 1rem;
   font-size: 1rem;
   border-radius: 0.5rem;
+}
+
+/* Password field with toggle */
+.password-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.password-field input {
+  flex: 1;
+}
+
+.password-toggle {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.password-hint {
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+/* ERROR BOX */
+.error-box {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* Login / Register switch text */
+.auth-switch {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
 }

@@ -1,13 +1,20 @@
+// BudgetsPage.jsx
 import React, { useState } from "react";
 import useApi from "../hooks/useApi";
 import { getBudgets, updateBudget } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
 import { useAuth } from "../auth/AuthContext";
+import { useSettings } from "../settings/SettingsContext";
+import { formatCurrency } from "../utils/format";
 
 function BudgetsPage() {
   const { user } = useAuth();
   const username = user?.username;
+
+  const { settings } = useSettings();
+  const currency = settings?.currency || "USD";
+  const locale = settings?.locale || undefined;
 
   const { data: budgets, loading, error, setData } = useApi(
     () => (username ? getBudgets(username) : Promise.resolve([])),
@@ -19,14 +26,19 @@ function BudgetsPage() {
 
   const startEdit = (b) => {
     setEditing(b.id);
-    setNewLimit(b.limit);
+    setNewLimit(b.limit); // b.limit is from our mapping
   };
 
   const saveEdit = async (b) => {
-    const payload = { ...b, limit: parseFloat(newLimit) };
-    await updateBudget(b.id, payload);
-    const updated = budgets.map((x) => (x.id === b.id ? payload : x));
-    setData(updated);
+    const updatedBudget = await updateBudget(b.id, {
+      ...b,
+      limit: parseFloat(newLimit),
+    });
+
+    const updatedList = budgets.map((x) =>
+      x.id === b.id ? updatedBudget : x
+    );
+    setData(updatedList);
     setEditing(null);
   };
 
@@ -53,10 +65,7 @@ function BudgetsPage() {
                 <tr key={b.id || b.category}>
                   <td>{b.category}</td>
                   <td className="align-right">
-                    {b.spent.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                    })}
+                    {formatCurrency(b.spent, currency, locale)}
                   </td>
                   <td className="align-right">
                     {editing === b.id ? (
@@ -67,10 +76,7 @@ function BudgetsPage() {
                         onChange={(e) => setNewLimit(e.target.value)}
                       />
                     ) : (
-                      b.limit.toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "USD",
-                      })
+                      formatCurrency(b.limit, currency, locale)
                     )}
                   </td>
                   <td>

@@ -19,7 +19,10 @@ function TransactionsPage() {
   const { data, loading, error, setData } = useApi(
     () =>
       username
-        ? getTransactions({ username, category: filters.category || undefined })
+        ? getTransactions({
+            username,
+            category: filters.category || undefined,
+          })
         : Promise.resolve([]),
     [username, filters.category]
   );
@@ -30,14 +33,23 @@ function TransactionsPage() {
 
   const handleCreateTransaction = async (payload) => {
     if (!username) return;
+
     await createTransaction({ ...payload, username });
-    setData(
-      await getTransactions({
-        username,
-        category: filters.category || undefined,
-      })
-    );
+
+    // Re-fetch after creation so everything stays in sync
+    const fresh = await getTransactions({
+      username,
+      category: filters.category || undefined,
+    });
+    setData(fresh);
   };
+
+  // FRONTEND date filtering (yyyy-mm-dd compares lexicographically correctly)
+  const filteredTransactions = (data || []).filter((t) => {
+    if (filters.from && t.date < filters.from) return false;
+    if (filters.to && t.date > filters.to) return false;
+    return true;
+  });
 
   return (
     <>
@@ -70,7 +82,7 @@ function TransactionsPage() {
 
       {!loading && (
         <TransactionsTable
-          transactions={data || []}
+          transactions={filteredTransactions}
           onCreate={handleCreateTransaction}
         />
       )}

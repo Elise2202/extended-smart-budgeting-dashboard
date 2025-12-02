@@ -1,12 +1,19 @@
 import React, { useState } from "react";
+import { useSettings } from "../settings/SettingsContext";
+import { formatCurrency } from "../utils/format";
 
 function TransactionsTable({ transactions = [], onCreate }) {
   const [form, setForm] = useState({
     date: "",
     description: "",
     category: "",
-    amount: ""
+    amount: "",
+    type: "expense", // default
   });
+
+  const { settings } = useSettings();
+  const currency = settings?.currency || "USD";
+  const locale = settings?.locale || undefined;
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -17,17 +24,44 @@ function TransactionsTable({ transactions = [], onCreate }) {
     if (!form.date || !form.description || !form.category || !form.amount) return;
 
     const payload = {
-      ...form,
-      amount: parseFloat(form.amount)
+      date: form.date,
+      description: form.description,
+      category: form.category,
+      amount: parseFloat(form.amount),
+      type: form.type, // <-- IMPORTANT
     };
 
     onCreate?.(payload);
+
     setForm({
       date: "",
       description: "",
       category: "",
-      amount: ""
+      amount: "",
+      type: "expense",
     });
+  };
+
+  const renderAmountCell = (t) => {
+    // Prefer the explicit type if present
+    let signedAmount;
+    if (t.type === "expense") {
+      signedAmount = -Math.abs(t.amount);
+    } else if (t.type === "income") {
+      signedAmount = Math.abs(t.amount);
+    } else {
+      // Fallback for old data with no type set
+      signedAmount = t.amount;
+    }
+
+    const className =
+      "align-right " + (signedAmount < 0 ? "negative" : "positive");
+
+    return (
+      <td className={className}>
+        {formatCurrency(signedAmount, currency, locale)}
+      </td>
+    );
   };
 
   return (
@@ -58,12 +92,7 @@ function TransactionsTable({ transactions = [], onCreate }) {
                 <td>{t.date}</td>
                 <td>{t.description}</td>
                 <td>{t.category}</td>
-                <td className={"align-right " + (t.amount < 0 ? "negative" : "positive")}>
-                  {t.amount.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD"
-                  })}
-                </td>
+                {renderAmountCell(t)}
               </tr>
             ))
           )}
@@ -94,6 +123,13 @@ function TransactionsTable({ transactions = [], onCreate }) {
           onChange={handleChange}
           required
         />
+
+        {/* NEW: type selector */}
+        <select name="type" value={form.type} onChange={handleChange}>
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+
         <input
           type="number"
           name="amount"
